@@ -5,12 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -20,6 +22,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +47,10 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyRestApiApplication(){
+    val productViewModel : ProductViewModel = viewModel()
+    val products by productViewModel.products.collectAsState()
+    val isLoading by productViewModel.isLoading.collectAsState()
+
     Scaffold(modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(title = {
@@ -54,26 +62,29 @@ fun MyRestApiApplication(){
                 ))
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)) {
-                val productViewModel : ProductViewModel = viewModel()
-                val products = productViewModel.products.collectAsState()
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
+            
+            LaunchedEffect(Unit) {
+                productViewModel.loadProducts()
+            }
 
-                LaunchedEffect(Unit) {
-                    productViewModel.loadProducts()
-                }
-
-
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(16.dp)
                 ) {
-
-                    items(products.value) {p ->
+                    items(products) { p ->
                         ProductCard(p)
                     }
                 }
-
+            }
         }
     }
 }
